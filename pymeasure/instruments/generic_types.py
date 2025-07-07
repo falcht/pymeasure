@@ -93,12 +93,21 @@ class SCPIMixin:
         errors = []
         while True:
             err = self.next_error
-            if int(err[0]) != 0:
-                log.error(f"{self.name}: {err[0]}, {err[1]}")
-                errors.append(err)
+            if hasattr(err, "__getitem__"):
+                code, message = err[0], err[1] if len(err) > 1 else ""
+            else:
+                code, message = err, ""
+            try:
+                code_int = int(code)
+            except (TypeError, ValueError):
+                break
+            if code_int != 0:
+                log.error(f"{self.name}: {code_int}, {message}")
+                errors.append([code_int, message])
             else:
                 break
         return errors
+
 
 
 class SCPIUnknownMixin(SCPIMixin):
