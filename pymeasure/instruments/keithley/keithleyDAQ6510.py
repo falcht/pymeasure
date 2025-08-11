@@ -270,7 +270,7 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
 
         self.check_errors()
 
-    def measure_voltage(self, nplc=1, voltage=1000, auto_range=True):
+    def measure_voltage(self, nplc=1, voltage=1000, auto_range=True, mode="DC"):
         """ Configure the measurement of voltage.
 
         :param nplc: Number of power line cycles (NPLC) from 5E-4 to 15 (60 Hz)
@@ -280,15 +280,26 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         :param auto_range: A boolean value to enable auto_range if ``True``,
                            else uses the set voltage.
         """
-        log.info(f"{self.name} is measuring voltage.")
-        self.write(f":SENS:FUNC \"VOLT\";:SENS:VOLT:NPLC {nplc};")
+
+        mode = mode.strip().upper()
+        if mode not in ("DC", "AC"):
+            raise ValueError(f"Unsupported mode: {mode}")
+        log.info(f"{self.name} is measuring {mode}-coupled voltage.")
+
+        self.write(f':SENS:FUNC "VOLT:{mode}";')
+        if mode == "AC":
+            # pick a bandwidth that covers your signal (e.g. 30 Hz)
+            self.write(":SENS:VOLT:AC:DET:BAND 300;")
+        else:
+            self.write(f":SENS:VOLT:NPLC {nplc};")
         if auto_range:
             self.write(":SENS:VOLT:RANG:AUTO ON;")
         else:
             self.voltage_range = voltage
         self.check_errors()
+        
 
-    def measure_current(self, nplc=1, current=3, auto_range=True):
+    def measure_current(self, nplc=1, current=3, auto_range=True, mode="DC"):
         """ Configure the measurement of current.
 
         :param nplc: Number of power line cycles (NPLC) from 5E-4 to 15 (60 Hz)
@@ -298,12 +309,23 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         :param auto_range: A boolean value to enable auto_range if ``True``,
                            else uses the set current.
         """
-        log.info(f"{self.name} is measuring current.")
-        self.write(f":SENS:FUNC \"CURR\";:SENS:CURR:NPLC {nplc};")
+
+        mode = mode.strip().upper()
+        if mode not in ("DC", "AC"):
+            raise ValueError(f"Unsupported mode: {mode}")
+        log.info(f"{self.name} is measuring {mode}-coupled current.")
+
+        self.write(f':SENS:FUNC "CURR:{mode}";')
+        if mode == "AC":
+            self.write(":SENS:CURR:AC:DET:BAND 300;")   # valid values: 3, 30, 300 Hz
+        else:
+            self.write(f":SENS:CURR:NPLC {nplc};")
+
         if auto_range:
             self.write(":SENS:CURR:RANG:AUTO ON;")
         else:
             self.current_range = current
+
         self.check_errors()
 
 
