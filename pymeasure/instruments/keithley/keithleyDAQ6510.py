@@ -284,12 +284,12 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         mode = mode.strip().upper()
         if mode not in ("DC", "AC"):
             raise ValueError(f"Unsupported mode: {mode}")
-        log.info(f"{self.name} is measuring {mode}-coupled voltage.")
+        log.debug(f"{self.name} is measuring {mode}-coupled voltage.")
 
         self.write(f':SENS:FUNC "VOLT:{mode}";')
         if mode == "AC":
             # pick a bandwidth that covers your signal (e.g. 30 Hz)
-            self.write(":SENS:VOLT:AC:DET:BAND 300;")
+            self.write(":SENS:VOLT:AC:DET:BAND 3;")
         else:
             self.write(f":SENS:VOLT:NPLC {nplc};")
         if auto_range:
@@ -313,11 +313,12 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         mode = mode.strip().upper()
         if mode not in ("DC", "AC"):
             raise ValueError(f"Unsupported mode: {mode}")
-        log.info(f"{self.name} is measuring {mode}-coupled current.")
+        log.debug(f"{self.name} is measuring {mode}-coupled current.")
 
         self.write(f':SENS:FUNC "CURR:{mode}";')
         if mode == "AC":
-            self.write(":SENS:CURR:AC:DET:BAND 300;")   # valid values: 3, 30, 300 Hz
+            self.write(":SENS:CURR:AC:DET:BAND 30")   # valid values: 3, 30, 300 Hz
+
         else:
             self.write(f":SENS:CURR:NPLC {nplc};")
 
